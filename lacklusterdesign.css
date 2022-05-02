@@ -1,0 +1,23 @@
+body{
+  background-color: #444;
+}
+#container{
+  margin: 0 auto;
+  width: 23em;
+}
+#block{
+  margin-top: 100px;
+  font-family: verdana;
+  font-size: 10px;
+  color: #000;
+  background-color: #ddd;
+  text-align: center;
+  border: 2px solid #FFF;
+}
+p{
+  margin: 0px;
+  padding: 5px;
+}
+#image{
+  width: 100%;
+}
