@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#dashboard {
+  font-family: Helvetica;
+  font-size: 5vw;
+  font-weight: lighter;
+  visibility: hidden;
+}
+</style>
+</head>
+<body>
+
+<div id="dashboard">
+  Happy <span id="dayOfWeek"></span>! The time is <span id="currentTime"></span>.</br>
+  </br>
+  The bus will arrive in <span id="bus"></span>.</br>
+  </br>
+  Today's weather:</br>
+  <span id="weather"></span>
+</div>
+
+<script>
+const busUrl = "https://api-v3.mbta.com/predictions?filter[stop]=1403&filter[direction_id]=1"
+const forecastUrl = "https://api.weather.gov/gridpoints/BOX/70,90/forecast"
+
+function getMinutesRemaining(prediction) {
+  var arrival_time = prediction["attributes"]["arrival_time"]
+  var diff = Date.parse(arrival_time) - Date.now()
+  return Math.floor(diff / 1000 / 60)
+}
+
+function main() {
+  refresh()
+  setInterval(refresh, 30000)
+}
+
+function randomColor() {
+  return "#" + Math.floor(Math.random() * 16777215).toString(16)
+}
+
+function randomPastel() {
+  return "hsl(" + 360 * Math.random() + ',' +
+             (25 + 70 * Math.random()) + '%,' +
+             (85 + 10 * Math.random()) + '%)'
+}
+
+function randomizeColors() {
+  document.body.style.background = randomColor()
+  document.getElementById("dashboard").style.color = randomColor()
+}
+
+function refresh() {
+  const now = new Date()
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  let day = days[new Date().getDay()]
+  document.getElementById("dayOfWeek").innerHTML = day
+
+  let currentTime = now.toLocaleTimeString([], {hour: "numeric", minute: "numeric"})
+  document.getElementById("currentTime").innerHTML = currentTime
+
+  let p1 = fetch(busUrl).then(response => response.json())
+  let p2 = fetch(forecastUrl).then(response => response.json())
+  Promise.all([p1, p2]).then(([busResponse, forecastResponse]) => {
+    let busTimes = busResponse["data"]
+      .map(getMinutesRemaining)
+      .filter(x => x >= 0)
+      .slice(0, 2)
+      .join(" and ")
+    let unit = busTimes == "1" ? "minute" : "minutes"
+    document.getElementById("bus").innerHTML = busTimes + " " + unit
+
+    let forecast = forecastResponse["properties"]["periods"][0]["detailedForecast"]
+    document.getElementById("weather").innerHTML = forecast
+
+    document.getElementById("dashboard").style.visibility = "visible"
+  })
+}
+
+document.onkeyup = function(e) {
+  if (e.which == 67 /* C */) {
+		randomizeColors()
+  }
+};
+
+window.onload = main
+</script>
+
+</body>
+</html>
