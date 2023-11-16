@@ -17,7 +17,7 @@
   </br>
   The bus will arrive in <span id="bus"></span>.</br>
   </br>
-  Today's weather:</br>
+  Today's forecast:</br>
   <span id="weather"></span>
 </div>
 
@@ -26,24 +26,13 @@ const busUrl = "https://api-v3.mbta.com/predictions?filter[stop]=1403&filter[dir
 const forecastUrl = "https://api.weather.gov/gridpoints/BOX/70,90/forecast"
 
 function getMinutesRemaining(prediction) {
-  var arrival_time = prediction["attributes"]["arrival_time"]
-  var diff = Date.parse(arrival_time) - Date.now()
+  var arrivalTime = prediction["attributes"]["arrival_time"]
+  var diff = Date.parse(arrivalTime) - Date.now()
   return Math.floor(diff / 1000 / 60)
 }
 
-function main() {
-  refresh()
-  setInterval(refresh, 30000)
-}
-
 function randomColor() {
-  return "#" + Math.floor(Math.random() * 16777215).toString(16)
-}
-
-function randomPastel() {
-  return "hsl(" + 360 * Math.random() + ',' +
-             (25 + 70 * Math.random()) + '%,' +
-             (85 + 10 * Math.random()) + '%)'
+  return "#" + Math.floor(Math.random() * Math.pow(2, 24)).toString(16)
 }
 
 function randomizeColors() {
@@ -51,15 +40,19 @@ function randomizeColors() {
   document.getElementById("dashboard").style.color = randomColor()
 }
 
+function setInnerHtml(id, value) {
+  document.getElementById(id).innerHTML = value
+}
+
 function refresh() {
   const now = new Date()
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   let day = days[new Date().getDay()]
-  document.getElementById("dayOfWeek").innerHTML = day
+  setInnerHtml("dayOfWeek", day)
 
   let currentTime = now.toLocaleTimeString([], {hour: "numeric", minute: "numeric"})
-  document.getElementById("currentTime").innerHTML = currentTime
+  setInnerHtml("currentTime", currentTime)
 
   let p1 = fetch(busUrl).then(response => response.json())
   let p2 = fetch(forecastUrl).then(response => response.json())
@@ -70,22 +63,25 @@ function refresh() {
       .slice(0, 2)
       .join(" and ")
     let unit = busTimes == "1" ? "minute" : "minutes"
-    document.getElementById("bus").innerHTML = busTimes + " " + unit
+    setInnerHtml("bus", busTimes + " " + unit)
 
     let forecast = forecastResponse["properties"]["periods"][0]["detailedForecast"]
-    document.getElementById("weather").innerHTML = forecast
+    setInnerHtml("weather", forecast)
 
     document.getElementById("dashboard").style.visibility = "visible"
   })
 }
 
-document.onkeyup = function(e) {
-  if (e.which == 67 /* C */) {
-		randomizeColors()
-  }
-};
+window.onload = function() {
+  document.onkeyup = function(e) {
+    if (e.which == 67 /* C */) {
+      randomizeColors()
+    }
+  };
 
-window.onload = main
+  refresh()
+  setInterval(refresh, 20000)
+}
 </script>
 
 </body>
