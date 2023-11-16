@@ -14,6 +14,7 @@
 
 <div id="dashboard">
   Happy <span id="dayOfWeek"></span>! The time is <span id="currentTime"></span>.</br>
+  It is <span id="temp"></span> degrees outside<span id="windchill"></span>.</br>
   </br>
   The bus will arrive in <span id="bus"></span>.</br>
   </br>
@@ -24,6 +25,7 @@
 <script>
 const busUrl = "https://api-v3.mbta.com/predictions?filter[stop]=1403&filter[direction_id]=1"
 const forecastUrl = "https://api.weather.gov/gridpoints/BOX/70,90/forecast"
+const observationsUrl = "https://api.weather.gov/stations/kbos/observations/latest"
 
 function getMinutesRemaining(prediction) {
   var arrivalTime = prediction["attributes"]["arrival_time"]
@@ -44,6 +46,10 @@ function setInnerHtml(id, value) {
   document.getElementById(id).innerHTML = value
 }
 
+function toFahrenheit(temp) {
+    return Math.floor(9 * temp / 5 + 32);
+}
+
 function refresh() {
   const now = new Date()
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -56,7 +62,8 @@ function refresh() {
 
   let p1 = fetch(busUrl).then(response => response.json())
   let p2 = fetch(forecastUrl).then(response => response.json())
-  Promise.all([p1, p2]).then(([busResponse, forecastResponse]) => {
+  let p3 = fetch(observationsUrl).then(response => response.json())
+  Promise.all([p1, p2, p3]).then(([busResponse, forecastResponse, obsResponse]) => {
     let busTimes = busResponse["data"]
       .map(getMinutesRemaining)
       .filter(x => x >= 0)
@@ -67,6 +74,13 @@ function refresh() {
 
     let forecast = forecastResponse["properties"]["periods"][0]["detailedForecast"]
     setInnerHtml("weather", forecast)
+
+    let temp = toFahrenheit(obsResponse["properties"]["temperature"]["value"]);
+    setInnerHtml("temp", temp);
+    let windchill = obsResponse["properties"]["windChill"]["value"];
+    if (windchill > 1) {
+      setInnerHtml("windchill", " with a windchill of −" + toFahrenheit(windchill));
+    }
 
     document.getElementById("dashboard").style.visibility = "visible"
   })
